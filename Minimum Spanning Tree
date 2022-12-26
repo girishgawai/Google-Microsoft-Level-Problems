@@ -1,0 +1,206 @@
+import java.util.*;
+import java.lang.*;
+
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
+
+public class Main {
+
+	HashMap<Integer, HashMap<Integer, Integer>> map;
+
+	public Main(int v)
+	{
+		this.map = new HashMap<>();
+		for (int i = 1; i <= v; i++) {
+			map.put(i, new HashMap<>());
+		}
+	}
+
+	public void addEges(int v1, int v2, int cost)			// inn dono vertex k bichme edge bnado iss cost ke sath
+	{
+		map.get(v1).put(v2, cost);
+		map.get(v2).put(v1, cost);
+	}
+
+	public class EdgePair {
+		int e1;
+		int e2;
+		int cost;
+
+		public EdgePair(int e1, int e2, int cost)			// setting values in ref var when objct is being created
+		{
+			this.e1 = e1;
+			this.e2 = e2;
+			this.cost = cost;
+		}
+
+		@Override
+		public String toString()
+		{
+			return e1 + "  " + e2 + " @ " + cost;
+		}
+
+	}
+
+	public List<EdgePair> getAllEdges()
+	{
+		List<EdgePair> list = new ArrayList<>();	// contains a class objct pair which v1 connected to v2 wid cost edge
+		for(int key : map.keySet())
+		{
+			for(int nbrs : map.get(key).keySet())
+			{
+				int cost = map.get(key).get(nbrs);
+				EdgePair pair = new EdgePair(key, nbrs, cost);				// yeh pair me konsa vtx kiss vtx ko join hai nd uski edge 
+																// ki cost kitni hai Ek class ka objct bnakr usme store krdege
+				list.add(pair);												// is vtx vtx cost pair objct ko list me store krege
+			}
+		}
+
+		return list;										// iss list me vtx-vtx-cost pair hai sare graph ki
+	}
+
+	
+public class DisJoint_Set {
+
+	public class Node {
+		int value;								// value of vertex
+		Node parent;							// parent of that vertex
+		int rank;								// height of that vertex tree
+	}
+
+	HashMap<Integer, Node> map = new HashMap<>();		// iss map me adrs rhega harr uss vertex ke node ka.. jise hm find krege graph me
+
+	// step 1
+	public void CreateSet(int v)
+	{
+		Node nn = new Node();
+		nn.value = v;								// vertex ki value
+		nn.parent = nn;					// jb ye node bnega tb iss vertex ka parent yeh node khud bnega
+		nn.rank = 0;					// initial rank of this vertex is 0
+
+		map.put(v, nn);					// map me add kroge iss vertex ko nd value me adrs vtx ka
+	}
+
+
+	// step 2
+	public int find(int v)							// find krna hai iss vertex ka Set Representative Element
+	{														
+		Node vtx_adrs = map.get(v);				// vtx element ka adrs
+		return find(vtx_adrs).value;										// iss vtx ka adrs ko find krege spanning tree wale graph me
+	}														// jisse set ka RE milega uska addrs uski val means RE ki value
+
+
+	private Node find(Node node) {						// yeh fn iss vtx ke adrs ko find krega set me iska RE element ka adrs kon hai
+		// TODO Auto-generated method stub
+		if(node.parent==node)						// vtx ka parent agr khud vtx ka adrs mila mtlb woh vtx element uss set ka RE hai
+			return node;
+
+		/***
+		 *  Node nn = find(node.parent);
+		 *	node.parent = nn;								// path compression
+		 *	return nn; 
+		 */
+		return find(node.parent);						// parent ka adrs bhejte jayege current node ka .. uska RE find krne iske set ka
+	}
+
+
+	// step 3
+	public void union(int v1, int v2)					// yeh dono vtx jis set me hai uske RE ko find kro nd accodingly merge kro
+	{
+		int s1 = find(v1);
+		int s2 = find(v2);
+		Node re1 = map.get(s1);	// map se iss node vtx ka adrs lelo.. jisse RE k adrs se compare krege dono sets ke RE ko and unje ranks ko
+		Node re2 = map.get(s2);						// set 2 ka RE ka adrs
+
+		if(re1.rank==re2.rank)	// agr dono set ke trees ke RE ki ranks same hai toh kisi ko v kisise merge krdo (parent kiska v join kro)
+		{											// jisse merge hora uska RE ka rank+1 hoga
+			re1.parent = re2;
+			re2.rank = re2.rank + 1;								// jisse merge hua uske RE ka rank 1 se bdhega
+		}
+		else if(re1.rank>re2.rank)	// agr RE2 ka rank chota hai RE1 se toh chote wala ka parent chng kro.. usse rank chng nh hoga
+		{
+			re2.parent = re1;
+		}
+		else
+		{
+			re1.parent = re2;						// RE2 ka rank bda hai set 2 ke RE k rank se.. so chote wale ka parent chng krege
+		}
+	}
+
+}
+
+	
+	public int KruskalsAlgo()
+	{
+		List<EdgePair> list = getAllEdges();	// this list contains of all the vtx vtx connected pair wid edge cost
+		
+		// sorting that list acc to cost so can use them to form min cost spanning tree
+		Collections.sort(list, new Comparator<EdgePair>() {
+			
+			@Override
+			public int compare(EdgePair o1, EdgePair o2)
+			{
+				return o1.cost - o2.cost;
+			}
+		});
+		
+		// Now the list contains the EdgePair vtx-vtx-cost wid it arranged in ascending order to form min cost spanning tree
+		
+		// Creating Set of DSU
+		DisJoint_Set dsu = new DisJoint_Set();
+		for (int i = 1; i <= map.size(); i++) {
+			dsu.CreateSet(i);
+		}
+		
+		// Using list which has all info of vtx-vtx connected edge cost.. arranged in min cost ascending pair
+		int ans = 0;						// counts the min cost of spanning tree
+		for(EdgePair vtx : list)
+		{
+			int v1 = vtx.e1;
+			int v2 = vtx.e2;
+			int re1 = dsu.find(v1);						// Representative Element of this set for vtx 1
+			int re2 = dsu.find(v2);						// Representative Element of this set for vtx 2
+			
+			if(re1==re2)
+			{
+				// ignore... iss case me cycle bnegi agr dono ka RE same hi hai set me
+			}
+			else
+			{
+				
+				// System.out.println(vtx);
+				dsu.union(re1, re2);
+				ans = ans+vtx.cost;
+			}
+			
+		}
+//		System.out.println("=====");
+		return ans;
+	}
+	
+	
+	public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
+		int n = sc.nextInt();					// no of nodes --> vertex
+		Main ks = new Main(n);
+		
+		int m = sc.nextInt();				// no of edges
+		
+		for (int i = 0; i < m; i++) {			// Creating a Graph
+			int v1 = sc.nextInt();
+			int v2 = sc.nextInt();
+			int cost = sc.nextInt();
+			
+			ks.addEges(v1, v2, cost);
+		}
+		
+		int minCostOfSpanningTree = ks.KruskalsAlgo();
+		System.out.println(minCostOfSpanningTree);
+	}
+
+}
