@@ -1,0 +1,102 @@
+import java.util.*;
+
+
+public class Main {
+	
+	HashMap<Integer, HashMap<Integer, Integer>> map = new HashMap<>();
+	
+	public Main(int v)					// number of vertexes in the graph
+	{
+		for (int i = 1; i <= v; i++) {
+			map.put(i, new HashMap<>());
+		}
+	}
+	
+	public void addEdges(int v1, int v2, int cost)
+	{
+		map.get(v1).put(v2, cost);
+		map.get(v2).put(v1, cost);
+	}
+	
+	public class PrimPair {
+		int vtx;
+		int vtx_acqr;								// vtx gets/acquired from which vertex
+		int cost;
+		
+		
+		public PrimPair(int vtx, int vtx_acqr, int cost)
+		{
+			this.vtx = vtx;
+			this.vtx_acqr = vtx_acqr;
+			this.cost = cost;
+		}
+		
+		@Override
+		public String toString()
+		{
+			return this.vtx + " <--- " + this.vtx_acqr + "  @  " + this.cost;
+		}
+	}
+	
+	public void primsAlgo(int src)
+	{
+		PriorityQueue<PrimPair> pq = new PriorityQueue<>(new Comparator<PrimPair>() {
+
+			@Override
+			public int compare(PrimPair o1, PrimPair o2) {
+				// TODO Auto-generated method stub
+				return o1.cost-o2.cost;
+			}
+		});
+		
+		int ans = 0;	// min cost for building spanning tree
+		HashSet<Integer> visited = new HashSet<>();
+		pq.add(new PrimPair(src, src, 0));			// src vertex ne khudko khudse acqr kia wid cost 0.. start toh krna pdega source se
+		
+		while(!pq.isEmpty())
+		{
+			PrimPair rem = pq.poll();
+			
+			if(visited.contains(rem.vtx))
+				continue;
+			
+			visited.add(rem.vtx);
+			
+			// System.out.println(rem);
+			ans+=rem.cost;
+			
+			for(int nbrs : map.get(rem.vtx).keySet())
+			{
+				if(!visited.contains(nbrs))
+				{
+					int c = map.get(rem.vtx).get(nbrs);
+					PrimPair nvnbrs = new PrimPair(nbrs, rem.vtx, c);
+					pq.add(nvnbrs);
+				}
+			}
+		}
+		
+		System.out.println(ans);
+	}
+	
+	public static void main(String[] args) {
+		
+		Scanner sc = new Scanner(System.in);
+		int n = sc.nextInt();					// no of nodes --> vertex
+		Main ks = new Main(n);
+		
+		int m = sc.nextInt();				// no of edges
+		
+		for (int i = 0; i < m; i++) {			// Creating a Graph
+			int v1 = sc.nextInt();
+			int v2 = sc.nextInt();
+			int cost = sc.nextInt();
+			
+			ks.addEdges(v1, v2, cost);
+		}
+		
+		 ks.primsAlgo(1);
+//		System.out.println(minCostOfSpanningTree);
+	}
+	
+}
