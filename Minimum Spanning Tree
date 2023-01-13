@@ -131,7 +131,7 @@ public class DisJoint_Set {
 			re1.parent = re2;						// RE2 ka rank bda hai set 2 ke RE k rank se.. so chote wale ka parent chng krege
 		}
 	}
-
+ 
 }
 
 	
